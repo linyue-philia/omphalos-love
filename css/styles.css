@@ -6281,7 +6281,7 @@
             overflow: hidden;
             cursor: grab;
             border: 1px solid rgba(var(--accent-color-rgb), 0.12);
-            display: block;
+            display: none;
             touch-action: none;
         }
 
