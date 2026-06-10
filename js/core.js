@@ -423,7 +423,22 @@ const loadData = async () => {
         try { await loadEnvelopeData(); } catch(e) { console.warn("信封数据加载失败", e); }
         
         displayedMessageCount = HISTORY_BATCH_SIZE;
-        
+
+        // 从 Supabase 同步云端数据
+        if (typeof loadMessagesFromSupabase === 'function') {
+            await initSupabaseUser();
+            const cloudMessages = await loadMessagesFromSupabase();
+            if (cloudMessages && cloudMessages.length > 0) {
+                // 比较本地和云端，如果云端有更新的消息，就使用云端的
+                const localLastTime = messages.length > 0 ? new Date(messages[messages.length - 1].timestamp) : new Date(0);
+                const cloudLastTime = new Date(cloudMessages[cloudMessages.length - 1].timestamp);
+                if (cloudLastTime > localLastTime || messages.length === 0) {
+                    messages = cloudMessages;
+                    console.log('从云端加载了', messages.length, '条消息');
+                }
+            }
+        }
+
         setTimeout(() => {
             applyAllAvatarFrames();
             manageAutoSendTimer(); 
@@ -625,6 +640,11 @@ const saveData = async () => {
     }
 
     _backupCriticalData();
+
+    // 同步到 Supabase 云端
+    if (typeof syncMessagesToSupabase === 'function') {
+        syncMessagesToSupabase(messages);
+    }
 };
 
         function initializeRandomUI() {
